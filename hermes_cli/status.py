@@ -10,9 +10,10 @@ import subprocess
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).parent.parent.resolve()
+SERVICE_NAME = os.getenv("HERMES_GATEWAY_SERVICE_NAME", "hermes-gateway")
 
 from hermes_cli.colors import Colors, color
-from hermes_cli.config import get_env_path, get_env_value
+from hermes_cli.config import get_env_path, get_env_value, get_hermes_home
 from hermes_constants import OPENROUTER_MODELS_URL
 
 def check_mark(ok: bool) -> str:
@@ -232,7 +233,7 @@ def show_status(args):
     
     if sys.platform.startswith('linux'):
         result = subprocess.run(
-            ["systemctl", "--user", "is-active", "hermes-gateway"],
+            ["systemctl", "--user", "is-active", SERVICE_NAME],
             capture_output=True,
             text=True
         )
@@ -259,7 +260,8 @@ def show_status(args):
     print()
     print(color("◆ Scheduled Jobs", Colors.CYAN, Colors.BOLD))
     
-    jobs_file = Path.home() / ".hermes" / "cron" / "jobs.json"
+    hermes_home = get_hermes_home()
+    jobs_file = hermes_home / "cron" / "jobs.json"
     if jobs_file.exists():
         import json
         try:
@@ -279,7 +281,7 @@ def show_status(args):
     print()
     print(color("◆ Sessions", Colors.CYAN, Colors.BOLD))
     
-    sessions_file = Path.home() / ".hermes" / "sessions" / "sessions.json"
+    sessions_file = hermes_home / "sessions" / "sessions.json"
     if sessions_file.exists():
         import json
         try:

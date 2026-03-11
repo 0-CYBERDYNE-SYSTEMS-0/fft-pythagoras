@@ -8,13 +8,20 @@ action="list" and for resolving human-friendly channel names to numeric IDs.
 
 import json
 import logging
+import os
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
-DIRECTORY_PATH = Path.home() / ".hermes" / "channel_directory.json"
+
+def get_hermes_home() -> Path:
+    """Resolve the active Hermes home directory."""
+    return Path(os.getenv("HERMES_HOME", Path.home() / ".hermes"))
+
+
+DIRECTORY_PATH = get_hermes_home() / "channel_directory.json"
 
 
 # ---------------------------------------------------------------------------
@@ -109,7 +116,7 @@ def _build_slack(adapter) -> List[Dict[str, str]]:
 
 def _build_from_sessions(platform_name: str) -> List[Dict[str, str]]:
     """Pull known channels/contacts from sessions.json origin data."""
-    sessions_path = Path.home() / ".hermes" / "sessions" / "sessions.json"
+    sessions_path = get_hermes_home() / "sessions" / "sessions.json"
     if not sessions_path.exists():
         return []
 

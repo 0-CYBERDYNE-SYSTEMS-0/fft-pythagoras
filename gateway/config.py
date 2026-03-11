@@ -19,6 +19,11 @@ from enum import Enum
 logger = logging.getLogger(__name__)
 
 
+def get_hermes_home() -> Path:
+    """Resolve the active Hermes home directory."""
+    return Path(os.getenv("HERMES_HOME", Path.home() / ".hermes"))
+
+
 class Platform(Enum):
     """Supported messaging platforms."""
     LOCAL = "local"
@@ -147,7 +152,7 @@ class GatewayConfig:
     reset_triggers: List[str] = field(default_factory=lambda: ["/new", "/reset"])
     
     # Storage paths
-    sessions_dir: Path = field(default_factory=lambda: Path.home() / ".hermes" / "sessions")
+    sessions_dir: Path = field(default_factory=lambda: get_hermes_home() / "sessions")
     
     # Delivery settings
     always_log_local: bool = True  # Always save cron outputs to local files
@@ -239,7 +244,7 @@ class GatewayConfig:
         if "default_reset_policy" in data:
             default_policy = SessionResetPolicy.from_dict(data["default_reset_policy"])
         
-        sessions_dir = Path.home() / ".hermes" / "sessions"
+        sessions_dir = get_hermes_home() / "sessions"
         if "sessions_dir" in data:
             sessions_dir = Path(data["sessions_dir"])
         
@@ -267,7 +272,7 @@ def load_gateway_config() -> GatewayConfig:
     config = GatewayConfig()
     
     # Try loading from ~/.hermes/gateway.json
-    gateway_config_path = Path.home() / ".hermes" / "gateway.json"
+    gateway_config_path = get_hermes_home() / "gateway.json"
     if gateway_config_path.exists():
         try:
             with open(gateway_config_path, "r", encoding="utf-8") as f:
@@ -281,7 +286,7 @@ def load_gateway_config() -> GatewayConfig:
     # for session reset policy since that's where hermes setup writes it.
     try:
         import yaml
-        config_yaml_path = Path.home() / ".hermes" / "config.yaml"
+        config_yaml_path = get_hermes_home() / "config.yaml"
         if config_yaml_path.exists():
             with open(config_yaml_path, encoding="utf-8") as f:
                 yaml_cfg = yaml.safe_load(f) or {}

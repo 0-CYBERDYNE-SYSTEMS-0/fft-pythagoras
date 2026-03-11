@@ -9,6 +9,7 @@ Routes messages to the appropriate destination based on:
 """
 
 import logging
+import os
 from pathlib import Path
 from datetime import datetime
 from dataclasses import dataclass
@@ -22,6 +23,11 @@ TRUNCATED_VISIBLE = 3800
 
 from .config import Platform, GatewayConfig
 from .session import SessionSource
+
+
+def get_hermes_home() -> Path:
+    """Resolve the active Hermes home directory."""
+    return Path(os.getenv("HERMES_HOME", Path.home() / ".hermes"))
 
 
 @dataclass
@@ -114,7 +120,7 @@ class DeliveryRouter:
         """
         self.config = config
         self.adapters = adapters or {}
-        self.output_dir = Path.home() / ".hermes" / "cron" / "output"
+        self.output_dir = get_hermes_home() / "cron" / "output"
     
     def resolve_targets(
         self,
@@ -254,7 +260,7 @@ class DeliveryRouter:
     def _save_full_output(self, content: str, job_id: str) -> Path:
         """Save full cron output to disk and return the file path."""
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        out_dir = Path.home() / ".hermes" / "cron" / "output"
+        out_dir = get_hermes_home() / "cron" / "output"
         out_dir.mkdir(parents=True, exist_ok=True)
         path = out_dir / f"{job_id}_{timestamp}.txt"
         path.write_text(content)
