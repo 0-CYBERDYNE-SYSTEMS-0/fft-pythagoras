@@ -58,8 +58,6 @@ import queue
 # Load .env from ~/.hermes/.env first, then project root as dev fallback
 from dotenv import load_dotenv
 from hermes_cli.branding import (
-    BRAND_BANNER_LOGO,
-    BRAND_COMPACT_BANNER,
     BRAND_NAME,
     BRAND_RESPONSE_LABEL,
     install_print_branding,
@@ -418,8 +416,8 @@ from model_tools import get_tool_definitions, get_toolset_for_tool
 # Extracted CLI modules (Phase 3)
 from hermes_cli.banner import (
     cprint as _cprint, _GOLD, _BOLD, _DIM, _RST,
-    VERSION, HERMES_AGENT_LOGO, HERMES_CADUCEUS, COMPACT_BANNER,
-    get_available_skills as _get_available_skills,
+    VERSION,
+    build_compact_banner,
     build_welcome_banner,
 )
 from hermes_cli.commands import COMMANDS, SlashCommandCompleter
@@ -729,277 +727,6 @@ class ChatConsole:
         output = self._buffer.getvalue()
         for line in output.rstrip("\n").split("\n"):
             _cprint(line)
-
-# ASCII Art - HERMES-AGENT logo (full width, single line - requires ~95 char terminal)
-HERMES_AGENT_LOGO = BRAND_BANNER_LOGO
-
-# ASCII Art - Hermes Caduceus (compact, fits in left panel)
-HERMES_CADUCEUS = """[#CD7F32]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣀⡀⠀⣀⣀⠀⢀⣀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]
-[#CD7F32]⠀⠀⠀⠀⠀⠀⢀⣠⣴⣾⣿⣿⣇⠸⣿⣿⠇⣸⣿⣿⣷⣦⣄⡀⠀⠀⠀⠀⠀⠀[/]
-[#FFBF00]⠀⢀⣠⣴⣶⠿⠋⣩⡿⣿⡿⠻⣿⡇⢠⡄⢸⣿⠟⢿⣿⢿⣍⠙⠿⣶⣦⣄⡀⠀[/]
-[#FFBF00]⠀⠀⠉⠉⠁⠶⠟⠋⠀⠉⠀⢀⣈⣁⡈⢁⣈⣁⡀⠀⠉⠀⠙⠻⠶⠈⠉⠉⠀⠀[/]
-[#FFD700]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣴⣿⡿⠛⢁⡈⠛⢿⣿⣦⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]
-[#FFD700]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠿⣿⣦⣤⣈⠁⢠⣴⣿⠿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]
-[#FFBF00]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠉⠻⢿⣿⣦⡉⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]
-[#FFBF00]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⢷⣦⣈⠛⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]
-[#CD7F32]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢠⣴⠦⠈⠙⠿⣦⡄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]
-[#CD7F32]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠸⣿⣤⡈⠁⢤⣿⠇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]
-[#B8860B]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠛⠷⠄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]
-[#B8860B]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣀⠑⢶⣄⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]
-[#B8860B]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⠁⢰⡆⠈⡿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]
-[#B8860B]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠳⠈⣡⠞⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]
-[#B8860B]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]"""
-
-# Compact banner for smaller terminals (fallback)
-# Note: built dynamically by _build_compact_banner() to fit terminal width
-COMPACT_BANNER = BRAND_COMPACT_BANNER
-
-
-def _build_compact_banner() -> str:
-    """Build a compact banner that fits the current terminal width."""
-    w = min(shutil.get_terminal_size().columns - 2, 64)
-    if w < 30:
-        return f"\n[#A7C76B]⚕ {BRAND_NAME}[/] [dim #6C7E3E]- practical AI assistant[/]\n"
-    inner = w - 2  # inside the box border
-    bar = "═" * w
-    line1 = f"⚕ {BRAND_NAME} - practical AI assistant"
-    line2 = "ready for terminal, tools, and messaging"
-    # Truncate and pad to fit
-    line1 = line1[:inner - 2].ljust(inner - 2)
-    line2 = line2[:inner - 2].ljust(inner - 2)
-    return (
-        f"\n[bold #FFD700]╔{bar}╗[/]\n"
-        f"[bold #FFD700]║[/] [#FFBF00]{line1}[/] [bold #FFD700]║[/]\n"
-        f"[bold #FFD700]║[/] [dim #B8860B]{line2}[/] [bold #FFD700]║[/]\n"
-        f"[bold #FFD700]╚{bar}╝[/]\n"
-    )
-
-
-def _get_available_skills() -> Dict[str, List[str]]:
-    """
-    Scan ~/.hermes/skills/ and return skills grouped by category.
-    
-    Returns:
-        Dict mapping category name to list of skill names
-    """
-    import os
-    
-    hermes_home = Path(os.getenv("HERMES_HOME", Path.home() / ".hermes"))
-    skills_dir = hermes_home / "skills"
-    skills_by_category = {}
-    
-    if not skills_dir.exists():
-        return skills_by_category
-    
-    for skill_file in skills_dir.rglob("SKILL.md"):
-        rel_path = skill_file.relative_to(skills_dir)
-        parts = rel_path.parts
-        
-        if len(parts) >= 2:
-            category = parts[0]
-            skill_name = parts[-2]
-        else:
-            category = "general"
-            skill_name = skill_file.parent.name
-        
-        skills_by_category.setdefault(category, []).append(skill_name)
-    
-    return skills_by_category
-
-
-def _format_context_length(tokens: int) -> str:
-    """Format a token count for display (e.g. 128000 → '128K', 1048576 → '1M')."""
-    if tokens >= 1_000_000:
-        val = tokens / 1_000_000
-        return f"{val:g}M"
-    elif tokens >= 1_000:
-        val = tokens / 1_000
-        return f"{val:g}K"
-    return str(tokens)
-
-
-def build_welcome_banner(console: Console, model: str, cwd: str, tools: List[dict] = None, enabled_toolsets: List[str] = None, session_id: str = None, context_length: int = None):
-    """
-    Build and print a Claude Code-style welcome banner with caduceus on left and info on right.
-    
-    Args:
-        console: Rich Console instance for printing
-        model: The current model name (e.g., "anthropic/claude-opus-4")
-        cwd: Current working directory
-        tools: List of tool definitions
-        enabled_toolsets: List of enabled toolset names
-        session_id: Unique session identifier for logging
-        context_length: Model's context window size in tokens
-    """
-    from model_tools import check_tool_availability, TOOLSET_REQUIREMENTS
-    
-    tools = tools or []
-    enabled_toolsets = enabled_toolsets or []
-    
-    # Get unavailable tools info for coloring
-    _, unavailable_toolsets = check_tool_availability(quiet=True)
-    disabled_tools = set()
-    for item in unavailable_toolsets:
-        disabled_tools.update(item.get("tools", []))
-    
-    # Build the side-by-side content using a table for precise control
-    layout_table = Table.grid(padding=(0, 2))
-    layout_table.add_column("left", justify="center")
-    layout_table.add_column("right", justify="left")
-    
-    # Build left content: caduceus + model info
-    # Resolve skin colors for the banner
-    try:
-        from hermes_cli.skin_engine import get_active_skin
-        _bskin = get_active_skin()
-        _accent = _bskin.get_color("banner_accent", "#FFBF00")
-        _dim = _bskin.get_color("banner_dim", "#B8860B")
-        _text = _bskin.get_color("banner_text", "#FFF8DC")
-        _session_c = _bskin.get_color("session_border", "#8B8682")
-        _title_c = _bskin.get_color("banner_title", "#FFD700")
-        _border_c = _bskin.get_color("banner_border", "#CD7F32")
-        _agent_name = _bskin.get_branding("agent_name", BRAND_NAME)
-    except Exception:
-        _bskin = None
-        _accent, _dim, _text = "#FFBF00", "#B8860B", "#FFF8DC"
-        _session_c, _title_c, _border_c = "#8B8682", "#FFD700", "#CD7F32"
-        _agent_name = BRAND_NAME
-
-    _hero = _bskin.banner_hero if hasattr(_bskin, 'banner_hero') and _bskin.banner_hero else HERMES_CADUCEUS
-    left_lines = ["", _hero, ""]
-    
-    # Shorten model name for display
-    model_short = model.split("/")[-1] if "/" in model else model
-    if len(model_short) > 28:
-        model_short = model_short[:25] + "..."
-    
-    ctx_str = f" [dim {_dim}]·[/] [dim {_dim}]{_format_context_length(context_length)} context[/]" if context_length else ""
-    left_lines.append(f"[{_accent}]{model_short}[/]{ctx_str} [dim {_dim}]·[/] [dim {_dim}]{BRAND_NAME}[/]")
-    left_lines.append(f"[dim {_dim}]{cwd}[/]")
-    
-    # Add session ID if provided
-    if session_id:
-        left_lines.append(f"[dim {_session_c}]Session: {session_id}[/]")
-    left_content = "\n".join(left_lines)
-    
-    # Build right content: tools list grouped by toolset
-    right_lines = []
-    right_lines.append(f"[bold {_accent}]Available Tools[/]")
-    
-    # Group tools by toolset (include all possible tools, both enabled and disabled)
-    toolsets_dict = {}
-    
-    # First, add all enabled tools
-    for tool in tools:
-        tool_name = tool["function"]["name"]
-        toolset = get_toolset_for_tool(tool_name) or "other"
-        if toolset not in toolsets_dict:
-            toolsets_dict[toolset] = []
-        toolsets_dict[toolset].append(tool_name)
-    
-    # Also add disabled toolsets so they show in the banner
-    for item in unavailable_toolsets:
-        # Map the internal toolset ID to display name
-        toolset_id = item.get("id", item.get("name", "unknown"))
-        display_name = f"{toolset_id}_tools" if not toolset_id.endswith("_tools") else toolset_id
-        if display_name not in toolsets_dict:
-            toolsets_dict[display_name] = []
-        for tool_name in item.get("tools", []):
-            if tool_name not in toolsets_dict[display_name]:
-                toolsets_dict[display_name].append(tool_name)
-    
-    # Display tools grouped by toolset (compact format, max 8 groups)
-    sorted_toolsets = sorted(toolsets_dict.keys())
-    display_toolsets = sorted_toolsets[:8]
-    remaining_toolsets = len(sorted_toolsets) - 8
-    
-    for toolset in display_toolsets:
-        tool_names = toolsets_dict[toolset]
-        # Color each tool name - red if disabled, normal if enabled
-        colored_names = []
-        for name in sorted(tool_names):
-            if name in disabled_tools:
-                colored_names.append(f"[red]{name}[/]")
-            else:
-                colored_names.append(f"[{_text}]{name}[/]")
-        
-        tools_str = ", ".join(colored_names)
-        # Truncate if too long (accounting for markup)
-        if len(", ".join(sorted(tool_names))) > 45:
-            # Rebuild with truncation
-            short_names = []
-            length = 0
-            for name in sorted(tool_names):
-                if length + len(name) + 2 > 42:
-                    short_names.append("...")
-                    break
-                short_names.append(name)
-                length += len(name) + 2
-            # Re-color the truncated list
-            colored_names = []
-            for name in short_names:
-                if name == "...":
-                    colored_names.append("[dim]...[/]")
-                elif name in disabled_tools:
-                    colored_names.append(f"[red]{name}[/]")
-                else:
-                    colored_names.append(f"[{_text}]{name}[/]")
-            tools_str = ", ".join(colored_names)
-        
-        right_lines.append(f"[dim {_dim}]{toolset}:[/] {tools_str}")
-    
-    if remaining_toolsets > 0:
-        right_lines.append(f"[dim {_dim}](and {remaining_toolsets} more toolsets...)[/]")
-    
-    right_lines.append("")
-    
-    # Add skills section
-    right_lines.append(f"[bold {_accent}]Available Skills[/]")
-    skills_by_category = _get_available_skills()
-    total_skills = sum(len(s) for s in skills_by_category.values())
-    
-    if skills_by_category:
-        for category in sorted(skills_by_category.keys()):
-            skill_names = sorted(skills_by_category[category])
-            # Show first 8 skills, then "..." if more
-            if len(skill_names) > 8:
-                display_names = skill_names[:8]
-                skills_str = ", ".join(display_names) + f" +{len(skill_names) - 8} more"
-            else:
-                skills_str = ", ".join(skill_names)
-            # Truncate if still too long
-            if len(skills_str) > 50:
-                skills_str = skills_str[:47] + "..."
-            right_lines.append(f"[dim {_dim}]{category}:[/] [{_text}]{skills_str}[/]")
-    else:
-        right_lines.append(f"[dim {_dim}]No skills installed[/]")
-    
-    right_lines.append("")
-    right_lines.append(f"[dim {_dim}]{len(tools)} tools · {total_skills} skills · /help for commands[/]")
-    
-    right_content = "\n".join(right_lines)
-    
-    # Add to table
-    layout_table.add_row(left_content, right_content)
-    
-    # Wrap in a panel with the title
-    outer_panel = Panel(
-        layout_table,
-        title=f"[bold {_title_c}]{_agent_name} {VERSION}[/]",
-        border_style=_border_c,
-        padding=(0, 2),
-    )
-    
-    # Print the big logo — use skin's custom logo if available
-    console.print()
-    term_width = shutil.get_terminal_size().columns
-    if term_width >= 95:
-        _logo = _bskin.banner_logo if hasattr(_bskin, 'banner_logo') and _bskin.banner_logo else HERMES_AGENT_LOGO
-        console.print(_logo)
-        console.print()
-    
-    # Print the panel with caduceus and info
-    console.print(outer_panel)
 
 
 # ============================================================================
@@ -1465,11 +1192,11 @@ class HermesCLI:
         
         # Auto-compact for narrow terminals — the full banner with caduceus
         # + tool list needs ~80 columns minimum to render without wrapping.
-        term_width = shutil.get_terminal_size().columns
-        use_compact = self.compact or term_width < 80
+        term_width = shutil.get_terminal_size((80, 24)).columns
+        use_compact = self.compact or term_width < 60
         
         if use_compact:
-            self.console.print(_build_compact_banner())
+            self.console.print(build_compact_banner(term_width))
             self._show_status()
         else:
             # Get tools for display
@@ -2528,9 +2255,9 @@ class HermesCLI:
             # and gets mangled by patch_stdout).
             if self._app:
                 cc = ChatConsole()
-                term_w = shutil.get_terminal_size().columns
-                if self.compact or term_w < 80:
-                    cc.print(_build_compact_banner())
+                term_w = shutil.get_terminal_size((80, 24)).columns
+                if self.compact or term_w < 60:
+                    cc.print(build_compact_banner(term_w))
                 else:
                     tools = get_tool_definitions(enabled_toolsets=self.enabled_toolsets, quiet_mode=True)
                     cwd = os.getenv("TERMINAL_CWD", os.getcwd())

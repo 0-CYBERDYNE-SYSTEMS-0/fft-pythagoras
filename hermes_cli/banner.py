@@ -6,6 +6,7 @@ Pure display functions with no HermesCLI state dependency.
 import json
 import logging
 import os
+import shutil
 import subprocess
 import time
 from pathlib import Path
@@ -73,23 +74,88 @@ from hermes_cli import __version__ as VERSION
 
 HERMES_AGENT_LOGO = BRAND_BANNER_LOGO
 
-HERMES_CADUCEUS = """[#CD7F32]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣀⡀⠀⣀⣀⠀⢀⣀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]
-[#CD7F32]⠀⠀⠀⠀⠀⠀⢀⣠⣴⣾⣿⣿⣇⠸⣿⣿⠇⣸⣿⣿⣷⣦⣄⡀⠀⠀⠀⠀⠀⠀[/]
-[#FFBF00]⠀⢀⣠⣴⣶⠿⠋⣩⡿⣿⡿⠻⣿⡇⢠⡄⢸⣿⠟⢿⣿⢿⣍⠙⠿⣶⣦⣄⡀⠀[/]
-[#FFBF00]⠀⠀⠉⠉⠁⠶⠟⠋⠀⠉⠀⢀⣈⣁⡈⢁⣈⣁⡀⠀⠉⠀⠙⠻⠶⠈⠉⠉⠀⠀[/]
-[#FFD700]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣴⣿⡿⠛⢁⡈⠛⢿⣿⣦⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]
-[#FFD700]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠿⣿⣦⣤⣈⠁⢠⣴⣿⠿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]
-[#FFBF00]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠉⠻⢿⣿⣦⡉⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]
-[#FFBF00]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⢷⣦⣈⠛⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]
-[#CD7F32]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢠⣴⠦⠈⠙⠿⣦⡄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]
-[#CD7F32]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠸⣿⣤⡈⠁⢤⣿⠇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]
-[#B8860B]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠛⠷⠄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]
-[#B8860B]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣀⠑⢶⣄⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]
-[#B8860B]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⠁⢰⡆⠈⡿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]
-[#B8860B]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠳⠈⣡⠞⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]
-[#B8860B]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]"""
+FARMFRIEND_LEAF_MANDALA = """[#D6E8A0]      ▲       ▲       ▲      [/]
+[#D6E8A0]      ║       ║       ║      [/]
+[#C5DE8A]      ║       ║       ║      [/]
+[#B6D37A]      ║       ║       ║      [/]
+[#A7C76B]      ╚═══╗   ║   ╔═══╝      [/]
+[#A7C76B]          ╚═══╩═══╝          [/]
+[#8FB255]              ║              [/]
+[#8FB255]              ║              [/]
+[#7A9B44]              ║              [/]
+[#7A9B44]            ══╪══            [/]
+[#6C7E3E]              ║              [/]
+[#6C7E3E]              ║              [/]
+[#6C7E3E]              ╹              [/]"""
+
+# Legacy export name kept so existing imports and skins continue to work.
+HERMES_CADUCEUS = FARMFRIEND_LEAF_MANDALA
 
 COMPACT_BANNER = BRAND_COMPACT_BANNER
+
+
+def _get_banner_logo() -> str:
+    """Return the active skin logo, or the default FarmFriend logo."""
+    try:
+        from hermes_cli.skin_engine import get_active_skin
+
+        skin = get_active_skin()
+        if skin.banner_logo:
+            return skin.banner_logo
+    except Exception:
+        pass
+    return HERMES_AGENT_LOGO
+
+
+def _get_banner_hero() -> str:
+    """Return the active skin hero art, or the default leaf mandala."""
+    try:
+        from hermes_cli.skin_engine import get_active_skin
+
+        skin = get_active_skin()
+        if skin.banner_hero:
+            return skin.banner_hero
+    except Exception:
+        pass
+    return HERMES_CADUCEUS
+
+
+def build_compact_banner(term_width: Optional[int] = None) -> str:
+    """Build a compact banner with mini pitchfork sigil."""
+    term_width = term_width or shutil.get_terminal_size((80, 24)).columns
+    accent = "#A7C76B"
+    dim = "#6C7E3E"
+    border = "#7A9B44"
+
+    if term_width < 32:
+        return f"\n[{accent}]▲▲▲ {BRAND_NAME}[/] [dim {dim}]assistant[/]\n"
+
+    # Mini pitchfork: 7 chars wide, 7 lines tall — fits any terminal >= 32 cols
+    fork = [
+        f"[{accent}] ▲ ▲ ▲ [/]",
+        f"[{accent}] ║ ║ ║ [/]",
+        f"[{accent}] ╚╦╩╦╝ [/]",
+        f"[{accent}]  ╚╩╝  [/]",
+        f"[{accent}]   ║   [/]",
+        f"[{accent}]  ═╪═  [/]",
+        f"[{accent}]   ╹   [/]",
+    ]
+
+    text_col = min(term_width - 12, 60)
+    lines = [
+        f"[bold {accent}]{BRAND_NAME}[/] [dim {dim}]— practical AI for the farm[/]",
+        f"[dim {dim}]terminal, tools, skills, and messaging[/]",
+        "",
+        f"[dim {dim}]/help for commands[/]",
+    ]
+
+    rows = []
+    for i in range(max(len(fork), len(lines))):
+        left  = fork[i]  if i < len(fork)  else f"[{accent}]       [/]"
+        right = lines[i] if i < len(lines) else ""
+        rows.append(f"  {left}  {right}")
+
+    return "\n" + "\n".join(rows) + "\n"
 
 
 # =========================================================================
@@ -208,7 +274,7 @@ def build_welcome_banner(console: Console, model: str, cwd: str,
                          session_id: str = None,
                          get_toolset_for_tool=None,
                          context_length: int = None):
-    """Build and print a welcome banner with caduceus on left and info on right.
+    """Build and print the welcome banner with hero art on the left.
 
     Args:
         console: Rich Console instance.
@@ -242,7 +308,10 @@ def build_welcome_banner(console: Console, model: str, cwd: str,
     text = _skin_color("banner_text", "#FFF8DC")
     session_color = _skin_color("session_border", "#8B8682")
 
-    left_lines = ["", HERMES_CADUCEUS, ""]
+    title_color = _skin_color("banner_title", "#A7C76B")
+    border_color = _skin_color("banner_border", "#7A9B44")
+
+    left_lines = ["", _get_banner_hero(), ""]
     model_short = model.split("/")[-1] if "/" in model else model
     if len(model_short) > 28:
         model_short = model_short[:25] + "..."
@@ -303,10 +372,10 @@ def build_welcome_banner(console: Console, model: str, cwd: str,
                     colored_names.append(f"[{text}]{name}[/]")
             tools_str = ", ".join(colored_names)
 
-        right_lines.append(f"[dim #B8860B]{toolset}:[/] {tools_str}")
+        right_lines.append(f"[dim {dim}]{toolset}:[/] {tools_str}")
 
     if remaining_toolsets > 0:
-        right_lines.append(f"[dim #B8860B](and {remaining_toolsets} more toolsets...)[/]")
+        right_lines.append(f"[dim {dim}](and {remaining_toolsets} more toolsets...)[/]")
 
     # MCP Servers section (only if configured)
     try:
@@ -317,12 +386,12 @@ def build_welcome_banner(console: Console, model: str, cwd: str,
 
     if mcp_status:
         right_lines.append("")
-        right_lines.append("[bold #FFBF00]MCP Servers[/]")
+        right_lines.append(f"[bold {accent}]MCP Servers[/]")
         for srv in mcp_status:
             if srv["connected"]:
                 right_lines.append(
-                    f"[dim #B8860B]{srv['name']}[/] [#FFF8DC]({srv['transport']})[/] "
-                    f"[dim #B8860B]—[/] [#FFF8DC]{srv['tools']} tool(s)[/]"
+                    f"[dim {dim}]{srv['name']}[/] [{text}]({srv['transport']})[/] "
+                    f"[dim {dim}]—[/] [{text}]{srv['tools']} tool(s)[/]"
                 )
             else:
                 right_lines.append(
@@ -373,8 +442,6 @@ def build_welcome_banner(console: Console, model: str, cwd: str,
     layout_table.add_row(left_content, right_content)
 
     agent_name = _skin_branding("agent_name", BRAND_NAME)
-    title_color = _skin_color("banner_title", "#FFD700")
-    border_color = _skin_color("banner_border", "#CD7F32")
     outer_panel = Panel(
         layout_table,
         title=f"[bold {title_color}]{agent_name} {VERSION}[/]",
@@ -383,6 +450,7 @@ def build_welcome_banner(console: Console, model: str, cwd: str,
     )
 
     console.print()
-    console.print(HERMES_AGENT_LOGO)
-    console.print()
+    if shutil.get_terminal_size((95, 24)).columns >= 95:
+        console.print(_get_banner_logo())
+        console.print()
     console.print(outer_panel)
