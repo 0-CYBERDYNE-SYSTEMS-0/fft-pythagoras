@@ -224,6 +224,52 @@ Write only the summary, starting with "[CONTEXT SUMMARY]:" prefix."""
         This method removes orphaned results and inserts stub results for
         orphaned calls so the message list is always well-formed.
         """
+        deduped_messages: List[Dict[str, Any]] = []
+        seen_call_ids: set = set()
+        dropped_duplicate_calls = 0
+        dropped_duplicate_results = 0
+
+        for msg in messages:
+            if msg.get("role") == "assistant" and msg.get("tool_calls"):
+                unique_tool_calls = []
+                for tc in msg.get("tool_calls") or []:
+                    cid = self._get_tool_call_id(tc)
+                    if cid and cid in seen_call_ids:
+                        dropped_duplicate_calls += 1
+                        continue
+                    if cid:
+                        seen_call_ids.add(cid)
+                    unique_tool_calls.append(tc)
+
+                if not unique_tool_calls:
+                    continue
+
+                if len(unique_tool_calls) != len(msg.get("tool_calls") or []):
+                    msg = dict(msg)
+                    msg["tool_calls"] = unique_tool_calls
+
+                deduped_messages.append(msg)
+                continue
+
+            if msg.get("role") == "tool":
+                cid = msg.get("tool_call_id")
+                if cid and cid in seen_call_ids and any(
+                    existing.get("role") == "tool" and existing.get("tool_call_id") == cid
+                    for existing in deduped_messages
+                ):
+                    dropped_duplicate_results += 1
+                    continue
+
+            deduped_messages.append(msg)
+
+        messages = deduped_messages
+        if (dropped_duplicate_calls or dropped_duplicate_results) and not self.quiet_mode:
+            logger.info(
+                "Compression sanitizer: dropped %d duplicate tool call(s) and %d duplicate tool result(s)",
+                dropped_duplicate_calls,
+                dropped_duplicate_results,
+            )
+
         surviving_call_ids: set = set()
         for msg in messages:
             if msg.get("role") == "assistant":

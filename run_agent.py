@@ -497,6 +497,8 @@ class AIAgent:
         
         # SQLite session store (optional -- provided by CLI or gateway)
         self._session_db = session_db
+        self._session_db_logged_count = 0
+        self._session_db_logged_session_id = self.session_id
         if self._session_db:
             try:
                 self._session_db.create_session(
@@ -806,6 +808,9 @@ class AIAgent:
         """Log a single message to SQLite immediately. Called after each messages.append()."""
         if not self._session_db:
             return
+        if self._session_db_logged_session_id != self.session_id:
+            self._session_db_logged_session_id = self.session_id
+            self._session_db_logged_count = 0
         try:
             role = msg.get("role", "unknown")
             content = msg.get("content")
@@ -826,6 +831,7 @@ class AIAgent:
                 tool_call_id=msg.get("tool_call_id"),
                 finish_reason=msg.get("finish_reason"),
             )
+            self._session_db_logged_count += 1
         except Exception as e:
             logger.debug("Session DB log_msg failed: %s", e)
 
@@ -839,7 +845,11 @@ class AIAgent:
         if not self._session_db:
             return
         try:
-            start_idx = len(conversation_history) if conversation_history else 0
+            if self._session_db_logged_session_id != self.session_id:
+                self._session_db_logged_session_id = self.session_id
+                self._session_db_logged_count = 0
+
+            start_idx = min(self._session_db_logged_count, len(messages))
             for msg in messages[start_idx:]:
                 role = msg.get("role", "unknown")
                 content = msg.get("content")
@@ -860,6 +870,7 @@ class AIAgent:
                     tool_call_id=msg.get("tool_call_id"),
                     finish_reason=msg.get("finish_reason"),
                 )
+                self._session_db_logged_count += 1
         except Exception as e:
             logger.debug("Session DB append_message failed: %s", e)
 
@@ -2681,6 +2692,8 @@ class AIAgent:
                     model=self.model,
                     parent_session_id=old_session_id,
                 )
+                self._session_db_logged_session_id = self.session_id
+                self._session_db_logged_count = 0
                 # Auto-number the title for the continuation session
                 if old_title:
                     try:
@@ -3110,7 +3123,10 @@ class AIAgent:
         
         # Initialize conversation (copy to avoid mutating the caller's list)
         messages = list(conversation_history) if conversation_history else []
-        
+        if self._session_db:
+            self._session_db_logged_session_id = self.session_id
+            self._session_db_logged_count = len(messages)
+
         # Hydrate todo store from conversation history (gateway creates a fresh
         # AIAgent per message, so the in-memory store is empty -- we need to
         # recover the todo state from the most recent todo tool response in history)
