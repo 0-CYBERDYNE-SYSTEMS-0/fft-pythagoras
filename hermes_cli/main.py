@@ -1476,7 +1476,7 @@ def cmd_config(args):
 
 def cmd_version(args):
     """Show version."""
-    print(f"{BRAND_NAME} v{__version__}")
+    print(f"{BRAND_NAME} {__version__}")
     print(f"Project: {PROJECT_ROOT}")
     
     # Show Python version
