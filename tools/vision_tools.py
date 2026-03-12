@@ -39,6 +39,7 @@ from urllib.parse import urlparse
 import httpx
 from openai import AsyncOpenAI
 from agent.auxiliary_client import get_vision_auxiliary_client
+from hermes_cli.branding import BRAND_OPENROUTER_TITLE
 from tools.debug_helpers import DebugSession
 
 logger = logging.getLogger(__name__)
@@ -54,7 +55,7 @@ if _aux_sync_client is not None:
     if "openrouter" in str(_aux_sync_client.base_url).lower():
         _async_kwargs["default_headers"] = {
             "HTTP-Referer": "https://github.com/NousResearch/hermes-agent",
-            "X-OpenRouter-Title": "Hermes Agent",
+            "X-OpenRouter-Title": BRAND_OPENROUTER_TITLE,
                 "X-OpenRouter-Categories": "productivity,cli-agent",
         }
     _aux_async_client = AsyncOpenAI(**_async_kwargs)

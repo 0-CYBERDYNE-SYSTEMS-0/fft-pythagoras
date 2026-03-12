@@ -25,6 +25,7 @@ sys.path.insert(0, str(_Path(__file__).resolve().parents[2]))
 
 from gateway.config import Platform, PlatformConfig
 from gateway.session import SessionSource
+from hermes_cli.branding import BRAND_HTTP_USER_AGENT
 
 
 # ---------------------------------------------------------------------------
@@ -83,7 +84,7 @@ async def cache_image_from_url(url: str, ext: str = ".jpg") -> str:
         response = await client.get(
             url,
             headers={
-                "User-Agent": "Mozilla/5.0 (compatible; HermesAgent/1.0)",
+                "User-Agent": f"Mozilla/5.0 (compatible; {BRAND_HTTP_USER_AGENT})",
                 "Accept": "image/*,*/*;q=0.8",
             },
         )
@@ -163,7 +164,7 @@ async def cache_audio_from_url(url: str, ext: str = ".ogg") -> str:
         response = await client.get(
             url,
             headers={
-                "User-Agent": "Mozilla/5.0 (compatible; HermesAgent/1.0)",
+                "User-Agent": f"Mozilla/5.0 (compatible; {BRAND_HTTP_USER_AGENT})",
                 "Accept": "audio/*,*/*;q=0.8",
             },
         )

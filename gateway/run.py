@@ -28,8 +28,17 @@ from typing import Dict, Optional, Any, List
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+from hermes_cli.branding import (
+    BRAND_CLI_COMMAND,
+    BRAND_GATEWAY,
+    BRAND_NAME,
+    install_print_branding,
+    scrub_public_text,
+)
+
 # Resolve Hermes home directory (respects HERMES_HOME override)
 _hermes_home = Path(os.getenv("HERMES_HOME", Path.home() / ".hermes"))
+install_print_branding()
 
 # Load environment variables from ~/.hermes/.env first
 from dotenv import load_dotenv
@@ -466,7 +475,7 @@ class GatewayRunner:
         
         Returns True if at least one adapter connected successfully.
         """
-        logger.info("Starting Hermes Gateway...")
+        logger.info("Starting %s...", BRAND_GATEWAY)
         logger.info("Session storage: %s", self.config.sessions_dir)
         
         # Warn if no user allowlists are configured and open access is not opted in
@@ -1393,7 +1402,7 @@ class GatewayRunner:
         is_running = session_key in self._running_agents
         
         lines = [
-            "📊 **Hermes Gateway Status**",
+            f"📊 **{BRAND_GATEWAY} Status**",
             "",
             f"**Session ID:** `{session_entry.session_id[:12]}...`",
             f"**Created:** {session_entry.created_at.strftime('%Y-%m-%d %H:%M')}",
@@ -1422,7 +1431,7 @@ class GatewayRunner:
     async def _handle_help_command(self, event: MessageEvent) -> str:
         """Handle /help command - list available commands."""
         lines = [
-            "📖 **Hermes Commands**\n",
+            f"📖 **{BRAND_NAME} Commands**\n",
             "`/new` — Start a new conversation",
             "`/reset` — Reset conversation history",
             "`/status` — Show session info",
@@ -1440,7 +1449,7 @@ class GatewayRunner:
             "`/insights [days]` — Show usage insights and analytics",
             "`/rollback [number]` — List or restore filesystem checkpoints",
             "`/reload-mcp` — Reload MCP servers from config",
-            "`/update` — Update Hermes Agent to the latest version",
+            f"`/update` — Update {BRAND_NAME} to the latest version",
             "`/help` — Show this message",
         ]
         try:
@@ -2157,10 +2166,10 @@ class GatewayRunner:
             return f"❌ MCP reload failed: {e}"
 
     async def _handle_update_command(self, event: MessageEvent) -> str:
-        """Handle /update command — update Hermes Agent to the latest version.
+        """Handle /update command — update FarmFriend to the latest version.
 
-        Spawns ``hermes update`` in a separate systemd scope so it survives the
-        gateway restart that ``hermes update`` triggers at the end.  A marker
+        Spawns the CLI update command in a separate systemd scope so it survives the
+        gateway restart that the update triggers at the end. A marker
         file is written so the *new* gateway process can notify the user of the
         result on startup.
         """
@@ -2175,9 +2184,9 @@ class GatewayRunner:
         if not git_dir.exists():
             return "✗ Not a git repository — cannot update."
 
-        hermes_bin = shutil.which("hermes")
-        if not hermes_bin:
-            return "✗ `hermes` command not found on PATH."
+        cli_bin = shutil.which(BRAND_CLI_COMMAND) or shutil.which("hermes")
+        if not cli_bin:
+            return f"✗ `{BRAND_CLI_COMMAND}` command not found on PATH."
 
         # Write marker so the restarted gateway can notify this chat
         pending_path = _hermes_home / ".update_pending.json"
@@ -2190,15 +2199,15 @@ class GatewayRunner:
         }
         pending_path.write_text(json.dumps(pending))
 
-        # Spawn `hermes update` in a separate cgroup so it survives gateway
+        # Spawn the update command in a separate cgroup so it survives gateway
         # restart.  systemd-run --user --scope creates a transient scope unit.
-        update_cmd = f"{hermes_bin} update > {output_path} 2>&1"
+        update_cmd = f"{cli_bin} update > {output_path} 2>&1"
         try:
             systemd_run = shutil.which("systemd-run")
             if systemd_run:
                 subprocess.Popen(
                     [systemd_run, "--user", "--scope",
-                     "--unit=hermes-update", "--",
+                     "--unit=farmfriend-update", "--",
                      "bash", "-c", update_cmd],
                     stdout=subprocess.DEVNULL,
                     stderr=subprocess.DEVNULL,
@@ -2216,7 +2225,7 @@ class GatewayRunner:
             pending_path.unlink(missing_ok=True)
             return f"✗ Failed to start update: {e}"
 
-        return "⚕ Starting Hermes update… I'll notify you when it's done."
+        return f"⚕ Starting {BRAND_NAME} update… I'll notify you when it's done."
 
     async def _send_update_notification(self) -> None:
         """If the gateway is starting after a ``/update``, notify the user."""
@@ -2250,9 +2259,9 @@ class GatewayRunner:
                     # Truncate if too long for a single message
                     if len(output) > 3500:
                         output = "…" + output[-3500:]
-                    msg = f"✅ Hermes update finished — gateway restarted.\n\n```\n{output}\n```"
+                    msg = f"✅ {BRAND_NAME} update finished — gateway restarted.\n\n```\n{output}\n```"
                 else:
-                    msg = "✅ Hermes update finished — gateway restarted successfully."
+                    msg = f"✅ {BRAND_NAME} update finished — gateway restarted successfully."
                 await adapter.send(chat_id, msg)
                 logger.info("Sent post-update notification to %s:%s", platform_str, chat_id)
         except Exception as e:
@@ -2895,7 +2904,7 @@ class GatewayRunner:
             result_holder[0] = result
             
             # Return final response, or a message if something went wrong
-            final_response = result.get("final_response")
+            final_response = scrub_public_text(result.get("final_response"))
             if not final_response:
                 error_msg = f"⚠️ {result['error']}" if result.get("error") else "(No response generated)"
                 return {
@@ -3258,7 +3267,7 @@ def main():
     """CLI entry point for the gateway."""
     import argparse
     
-    parser = argparse.ArgumentParser(description="Hermes Gateway - Multi-platform messaging")
+    parser = argparse.ArgumentParser(description=f"{BRAND_GATEWAY} - Multi-platform messaging")
     parser.add_argument("--config", "-c", help="Path to gateway config file")
     parser.add_argument("--verbose", "-v", action="store_true", help="Verbose output")
     

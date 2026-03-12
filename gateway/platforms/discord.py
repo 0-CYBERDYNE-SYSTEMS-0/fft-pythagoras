@@ -39,6 +39,7 @@ from gateway.platforms.base import (
     cache_image_from_url,
     cache_audio_from_url,
 )
+from hermes_cli.branding import BRAND_NAME
 
 
 def check_discord_requirements() -> bool:
@@ -487,8 +488,8 @@ class DiscordAdapter(BasePlatformAdapter):
 
         tree = self._client.tree
 
-        @tree.command(name="ask", description="Ask Hermes a question")
-        @discord.app_commands.describe(question="Your question for Hermes")
+        @tree.command(name="ask", description=f"Ask {BRAND_NAME} a question")
+        @discord.app_commands.describe(question=f"Your question for {BRAND_NAME}")
         async def slash_ask(interaction: discord.Interaction, question: str):
             await interaction.response.defer()
             event = self._build_slash_event(interaction, question)
@@ -510,7 +511,7 @@ class DiscordAdapter(BasePlatformAdapter):
             except Exception as e:
                 logger.debug("Discord followup failed: %s", e)
 
-        @tree.command(name="reset", description="Reset your Hermes session")
+        @tree.command(name="reset", description=f"Reset your {BRAND_NAME} session")
         async def slash_reset(interaction: discord.Interaction):
             await interaction.response.defer(ephemeral=True)
             event = self._build_slash_event(interaction, "/reset")
@@ -562,7 +563,7 @@ class DiscordAdapter(BasePlatformAdapter):
             except Exception as e:
                 logger.debug("Discord followup failed: %s", e)
 
-        @tree.command(name="status", description="Show Hermes session status")
+        @tree.command(name="status", description=f"Show {BRAND_NAME} session status")
         async def slash_status(interaction: discord.Interaction):
             await interaction.response.defer(ephemeral=True)
             event = self._build_slash_event(interaction, "/status")
@@ -582,7 +583,7 @@ class DiscordAdapter(BasePlatformAdapter):
             except Exception as e:
                 logger.debug("Discord followup failed: %s", e)
 
-        @tree.command(name="stop", description="Stop the running Hermes agent")
+        @tree.command(name="stop", description=f"Stop the running {BRAND_NAME} agent")
         async def slash_stop(interaction: discord.Interaction):
             await interaction.response.defer(ephemeral=True)
             event = self._build_slash_event(interaction, "/stop")
@@ -675,7 +676,7 @@ class DiscordAdapter(BasePlatformAdapter):
             except Exception as e:
                 logger.debug("Discord followup failed: %s", e)
 
-        @tree.command(name="update", description="Update Hermes Agent to the latest version")
+        @tree.command(name="update", description=f"Update {BRAND_NAME} to the latest version")
         async def slash_update(interaction: discord.Interaction):
             await interaction.response.defer(ephemeral=True)
             event = self._build_slash_event(interaction, "/update")

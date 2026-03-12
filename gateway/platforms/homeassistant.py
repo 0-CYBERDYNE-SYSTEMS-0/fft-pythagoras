@@ -35,6 +35,7 @@ from gateway.platforms.base import (
     MessageType,
     SendResult,
 )
+from hermes_cli.branding import BRAND_NAME
 
 logger = logging.getLogger(__name__)
 
@@ -383,7 +384,7 @@ class HomeAssistantAdapter(BasePlatformAdapter):
             "Content-Type": "application/json",
         }
         payload = {
-            "title": "Hermes Agent",
+            "title": BRAND_NAME,
             "message": content[:self.MAX_MESSAGE_LENGTH],
         }
 

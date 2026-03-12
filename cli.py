@@ -57,6 +57,14 @@ import queue
 
 # Load .env from ~/.hermes/.env first, then project root as dev fallback
 from dotenv import load_dotenv
+from hermes_cli.branding import (
+    BRAND_BANNER_LOGO,
+    BRAND_COMPACT_BANNER,
+    BRAND_NAME,
+    BRAND_RESPONSE_LABEL,
+    install_print_branding,
+    scrub_public_text,
+)
 from hermes_constants import OPENROUTER_BASE_URL
 
 _hermes_home = Path(os.getenv("HERMES_HOME", Path.home() / ".hermes"))
@@ -75,6 +83,7 @@ elif _project_env.exists():
 
 # Point mini-swe-agent at ~/.hermes/ so it shares our config
 os.environ.setdefault("MSWEA_GLOBAL_CONFIG_DIR", str(_hermes_home))
+install_print_branding()
 
 # =============================================================================
 # Configuration Loading
@@ -722,12 +731,7 @@ class ChatConsole:
             _cprint(line)
 
 # ASCII Art - HERMES-AGENT logo (full width, single line - requires ~95 char terminal)
-HERMES_AGENT_LOGO = """[bold #FFD700]██╗  ██╗███████╗██████╗ ███╗   ███╗███████╗███████╗       █████╗  ██████╗ ███████╗███╗   ██╗████████╗[/]
-[bold #FFD700]██║  ██║██╔════╝██╔══██╗████╗ ████║██╔════╝██╔════╝      ██╔══██╗██╔════╝ ██╔════╝████╗  ██║╚══██╔══╝[/]
-[#FFBF00]███████║█████╗  ██████╔╝██╔████╔██║█████╗  ███████╗█████╗███████║██║  ███╗█████╗  ██╔██╗ ██║   ██║[/]
-[#FFBF00]██╔══██║██╔══╝  ██╔══██╗██║╚██╔╝██║██╔══╝  ╚════██║╚════╝██╔══██║██║   ██║██╔══╝  ██║╚██╗██║   ██║[/]
-[#CD7F32]██║  ██║███████╗██║  ██║██║ ╚═╝ ██║███████╗███████║      ██║  ██║╚██████╔╝███████╗██║ ╚████║   ██║[/]
-[#CD7F32]╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚═╝     ╚═╝╚══════╝╚══════╝      ╚═╝  ╚═╝ ╚═════╝ ╚══════╝╚═╝  ╚═══╝   ╚═╝[/]"""
+HERMES_AGENT_LOGO = BRAND_BANNER_LOGO
 
 # ASCII Art - Hermes Caduceus (compact, fits in left panel)
 HERMES_CADUCEUS = """[#CD7F32]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣀⡀⠀⣀⣀⠀⢀⣀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]
@@ -748,23 +752,18 @@ HERMES_CADUCEUS = """[#CD7F32]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣀⡀⠀⣀⣀�
 
 # Compact banner for smaller terminals (fallback)
 # Note: built dynamically by _build_compact_banner() to fit terminal width
-COMPACT_BANNER = """
-[bold #FFD700]╔══════════════════════════════════════════════════════════════╗[/]
-[bold #FFD700]║[/]  [#FFBF00]⚕ NOUS HERMES[/] [dim #B8860B]- AI Agent Framework[/]              [bold #FFD700]║[/]
-[bold #FFD700]║[/]  [#CD7F32]Messenger of the Digital Gods[/]    [dim #B8860B]Nous Research[/]   [bold #FFD700]║[/]
-[bold #FFD700]╚══════════════════════════════════════════════════════════════╝[/]
-"""
+COMPACT_BANNER = BRAND_COMPACT_BANNER
 
 
 def _build_compact_banner() -> str:
     """Build a compact banner that fits the current terminal width."""
     w = min(shutil.get_terminal_size().columns - 2, 64)
     if w < 30:
-        return "\n[#FFBF00]⚕ NOUS HERMES[/] [dim #B8860B]- Nous Research[/]\n"
+        return f"\n[#A7C76B]⚕ {BRAND_NAME}[/] [dim #6C7E3E]- practical AI assistant[/]\n"
     inner = w - 2  # inside the box border
     bar = "═" * w
-    line1 = "⚕ NOUS HERMES - AI Agent Framework"
-    line2 = "Messenger of the Digital Gods  ·  Nous Research"
+    line1 = f"⚕ {BRAND_NAME} - practical AI assistant"
+    line2 = "ready for terminal, tools, and messaging"
     # Truncate and pad to fit
     line1 = line1[:inner - 2].ljust(inner - 2)
     line2 = line2[:inner - 2].ljust(inner - 2)
@@ -859,12 +858,12 @@ def build_welcome_banner(console: Console, model: str, cwd: str, tools: List[dic
         _session_c = _bskin.get_color("session_border", "#8B8682")
         _title_c = _bskin.get_color("banner_title", "#FFD700")
         _border_c = _bskin.get_color("banner_border", "#CD7F32")
-        _agent_name = _bskin.get_branding("agent_name", "Hermes Agent")
+        _agent_name = _bskin.get_branding("agent_name", BRAND_NAME)
     except Exception:
         _bskin = None
         _accent, _dim, _text = "#FFBF00", "#B8860B", "#FFF8DC"
         _session_c, _title_c, _border_c = "#8B8682", "#FFD700", "#CD7F32"
-        _agent_name = "Hermes Agent"
+        _agent_name = BRAND_NAME
 
     _hero = _bskin.banner_hero if hasattr(_bskin, 'banner_hero') and _bskin.banner_hero else HERMES_CADUCEUS
     left_lines = ["", _hero, ""]
@@ -875,7 +874,7 @@ def build_welcome_banner(console: Console, model: str, cwd: str, tools: List[dic
         model_short = model_short[:25] + "..."
     
     ctx_str = f" [dim {_dim}]·[/] [dim {_dim}]{_format_context_length(context_length)} context[/]" if context_length else ""
-    left_lines.append(f"[{_accent}]{model_short}[/]{ctx_str} [dim {_dim}]·[/] [dim {_dim}]Nous Research[/]")
+    left_lines.append(f"[{_accent}]{model_short}[/]{ctx_str} [dim {_dim}]·[/] [dim {_dim}]{BRAND_NAME}[/]")
     left_lines.append(f"[dim {_dim}]{cwd}[/]")
     
     # Add session ID if provided
@@ -1911,7 +1910,7 @@ class HermesCLI:
             for cmd, info in sorted(_skill_commands.items()):
                 _cprint(f"  {_GOLD}{cmd:<22}{_RST} {_DIM}-{_RST} {info['description']}")
 
-        _cprint(f"\n  {_DIM}Tip: Just type your message to chat with Hermes!{_RST}")
+        _cprint(f"\n  {_DIM}Tip: Just type your message to chat with {BRAND_NAME}!{_RST}")
         _cprint(f"  {_DIM}Multi-line: Alt+Enter for a new line{_RST}")
         _cprint(f"  {_DIM}Paste image: Alt+V (or /paste){_RST}\n")
     
@@ -3307,7 +3306,7 @@ class HermesCLI:
             self.conversation_history = result.get("messages", self.conversation_history) if result else self.conversation_history
             
             # Get the final response
-            response = result.get("final_response", "") if result else ""
+            response = scrub_public_text(result.get("final_response", "") if result else "")
             
             # Handle failed results (e.g., non-retryable errors like invalid model)
             if result and result.get("failed") and not response:
@@ -3321,17 +3320,18 @@ class HermesCLI:
                 # Add indicator that we were interrupted
                 if response and pending_message:
                     response = response + "\n\n---\n_[Interrupted - processing new message]_"
-            
+
+            response = scrub_public_text(response)
             if response:
                 # Use a Rich Panel for the response box — adapts to terminal
                 # width at render time instead of hard-coding border length.
                 try:
                     from hermes_cli.skin_engine import get_active_skin
                     _skin = get_active_skin()
-                    label = _skin.get_branding("response_label", "⚕ Hermes")
+                    label = _skin.get_branding("response_label", BRAND_RESPONSE_LABEL)
                     _resp_color = _skin.get_color("response_border", "#CD7F32")
                 except Exception:
-                    label = "⚕ Hermes"
+                    label = BRAND_RESPONSE_LABEL
                     _resp_color = "#CD7F32"
 
                 _chat_console = ChatConsole()
@@ -3409,10 +3409,10 @@ class HermesCLI:
         try:
             from hermes_cli.skin_engine import get_active_skin
             _welcome_skin = get_active_skin()
-            _welcome_text = _welcome_skin.get_branding("welcome", "Welcome to Hermes Agent! Type your message or /help for commands.")
+            _welcome_text = _welcome_skin.get_branding("welcome", f"Welcome to {BRAND_NAME}! Type your message or /help for commands.")
             _welcome_color = _welcome_skin.get_color("banner_text", "#FFF8DC")
         except Exception:
-            _welcome_text = "Welcome to Hermes Agent! Type your message or /help for commands."
+            _welcome_text = f"Welcome to {BRAND_NAME}! Type your message or /help for commands."
             _welcome_color = "#FFF8DC"
         self.console.print(f"[{_welcome_color}]{_welcome_text}[/]")
         self.console.print()
@@ -3920,14 +3920,15 @@ class HermesCLI:
                 else "  Other (type your answer)"
             )
             preview_lines.extend(_wrap_panel_text(other_label, 60, subsequent_indent="  "))
-            box_width = _panel_box_width("Hermes needs your input", preview_lines)
+            clarify_title = f"{BRAND_NAME} needs your input"
+            box_width = _panel_box_width(clarify_title, preview_lines)
             inner_text_width = max(8, box_width - 2)
 
             lines = []
             # Box top border
             lines.append(('class:clarify-border', '╭─ '))
-            lines.append(('class:clarify-title', 'Hermes needs your input'))
-            lines.append(('class:clarify-border', ' ' + ('─' * max(0, box_width - len("Hermes needs your input") - 3)) + '╮\n'))
+            lines.append(('class:clarify-title', clarify_title))
+            lines.append(('class:clarify-border', ' ' + ('─' * max(0, box_width - len(clarify_title) - 3)) + '╮\n'))
             _append_blank_panel_line(lines, 'class:clarify-border', box_width)
 
             # Question text

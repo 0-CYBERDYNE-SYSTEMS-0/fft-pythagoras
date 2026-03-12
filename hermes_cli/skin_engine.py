@@ -95,6 +95,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
+from hermes_cli.branding import BRAND_NAME, BRAND_RESPONSE_LABEL
+
 logger = logging.getLogger(__name__)
 
 
@@ -165,10 +167,10 @@ _BUILTIN_SKINS: Dict[str, Dict[str, Any]] = {
             # Empty = use hardcoded defaults in display.py
         },
         "branding": {
-            "agent_name": "Hermes Agent",
-            "welcome": "Welcome to Hermes Agent! Type your message or /help for commands.",
+            "agent_name": BRAND_NAME,
+            "welcome": f"Welcome to {BRAND_NAME}! Type your message or /help for commands.",
             "goodbye": "Goodbye! ⚕",
-            "response_label": " ⚕ Hermes ",
+            "response_label": f" {BRAND_RESPONSE_LABEL} ",
             "prompt_symbol": "❯ ",
             "help_header": "(^_^)? Available Commands",
         },
@@ -260,10 +262,10 @@ _BUILTIN_SKINS: Dict[str, Dict[str, Any]] = {
         },
         "spinner": {},
         "branding": {
-            "agent_name": "Hermes Agent",
-            "welcome": "Welcome to Hermes Agent! Type your message or /help for commands.",
+            "agent_name": BRAND_NAME,
+            "welcome": f"Welcome to {BRAND_NAME}! Type your message or /help for commands.",
             "goodbye": "Goodbye! ⚕",
-            "response_label": " ⚕ Hermes ",
+            "response_label": f" {BRAND_RESPONSE_LABEL} ",
             "prompt_symbol": "❯ ",
             "help_header": "[?] Available Commands",
         },
@@ -291,10 +293,10 @@ _BUILTIN_SKINS: Dict[str, Dict[str, Any]] = {
         },
         "spinner": {},
         "branding": {
-            "agent_name": "Hermes Agent",
-            "welcome": "Welcome to Hermes Agent! Type your message or /help for commands.",
+            "agent_name": BRAND_NAME,
+            "welcome": f"Welcome to {BRAND_NAME}! Type your message or /help for commands.",
             "goodbye": "Goodbye! ⚕",
-            "response_label": " ⚕ Hermes ",
+            "response_label": f" {BRAND_RESPONSE_LABEL} ",
             "prompt_symbol": "❯ ",
             "help_header": "(^_^)? Available Commands",
         },

@@ -39,6 +39,7 @@ from typing import Any, Dict, List, Optional, Tuple
 from openai import OpenAI
 
 from hermes_constants import OPENROUTER_BASE_URL
+from hermes_cli.branding import BRAND_OPENROUTER_TITLE
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +54,7 @@ _API_KEY_PROVIDER_AUX_MODELS: Dict[str, str] = {
 # OpenRouter app attribution headers
 _OR_HEADERS = {
     "HTTP-Referer": "https://github.com/NousResearch/hermes-agent",
-    "X-OpenRouter-Title": "Hermes Agent",
+    "X-OpenRouter-Title": BRAND_OPENROUTER_TITLE,
     "X-OpenRouter-Categories": "productivity,cli-agent",
 }
 

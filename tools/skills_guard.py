@@ -30,6 +30,7 @@ from pathlib import Path
 from typing import List, Tuple
 
 from hermes_constants import OPENROUTER_BASE_URL
+from hermes_cli.branding import BRAND_OPENROUTER_TITLE
 
 
 # ---------------------------------------------------------------------------
@@ -948,7 +949,7 @@ def llm_audit_skill(skill_path: Path, static_result: ScanResult,
             api_key=api_key,
             default_headers={
                 "HTTP-Referer": "https://github.com/NousResearch/hermes-agent",
-                "X-OpenRouter-Title": "Hermes Agent",
+                "X-OpenRouter-Title": BRAND_OPENROUTER_TITLE,
                 "X-OpenRouter-Categories": "productivity,cli-agent",
             },
         )

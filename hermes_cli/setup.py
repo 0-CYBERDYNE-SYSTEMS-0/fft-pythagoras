@@ -517,7 +517,7 @@ def setup_model_provider(config: dict):
 
     provider_choices = [
         "Nous Portal API key (direct API key access)",
-        "Login with Nous Portal (Nous Research subscription — OAuth)",
+        "Login with Nous Portal (subscription login — OAuth)",
         "Login with OpenAI Codex",
         "OpenRouter API key (100+ models, pay-per-use)",
         "Custom OpenAI-compatible endpoint (self-hosted / VLLM / etc.)",
@@ -577,7 +577,7 @@ def setup_model_provider(config: dict):
         print()
         print_header("Nous Portal Login")
         print_info("This will open your browser to authenticate with Nous Portal.")
-        print_info("You'll need a Nous Research account with an active subscription.")
+        print_info("You'll need an active Nous Portal subscription.")
         print()
 
         try:

@@ -73,6 +73,7 @@ from tools.browser_tool import cleanup_browser
 import requests
 
 from hermes_constants import OPENROUTER_BASE_URL, OPENROUTER_MODELS_URL
+from hermes_cli.branding import BRAND_OPENROUTER_TITLE
 
 # Agent internals extracted to agent/ package for modularity
 from agent.prompt_builder import (
@@ -385,7 +386,7 @@ class AIAgent:
         if "openrouter" in effective_base.lower():
             client_kwargs["default_headers"] = {
                 "HTTP-Referer": "https://github.com/NousResearch/hermes-agent",
-                "X-OpenRouter-Title": "Hermes Agent",
+                "X-OpenRouter-Title": BRAND_OPENROUTER_TITLE,
                 "X-OpenRouter-Categories": "productivity,cli-agent",
             }
         elif "api.kimi.com" in effective_base.lower():
@@ -2307,7 +2308,7 @@ class AIAgent:
             if "openrouter" in fb_base_url.lower():
                 client_kwargs["default_headers"] = {
                     "HTTP-Referer": "https://github.com/NousResearch/hermes-agent",
-                    "X-OpenRouter-Title": "Hermes Agent",
+                    "X-OpenRouter-Title": BRAND_OPENROUTER_TITLE,
                     "X-OpenRouter-Categories": "productivity,cli-agent",
                 }
             elif "api.kimi.com" in fb_base_url.lower():

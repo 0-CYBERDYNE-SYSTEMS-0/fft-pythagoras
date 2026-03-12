@@ -52,9 +52,16 @@ os.environ.setdefault("MSWEA_SILENT_STARTUP", "1")
 import logging
 
 from hermes_cli import __version__
+from hermes_cli.branding import (
+    BRAND_CLI_COMMAND,
+    BRAND_NAME,
+    install_print_branding,
+)
 from hermes_constants import OPENROUTER_BASE_URL
 
 logger = logging.getLogger(__name__)
+
+install_print_branding()
 
 
 def _has_any_provider_configured() -> bool:
@@ -756,7 +763,7 @@ def cmd_model(args):
     # Step 1: Provider selection — put active provider first with marker
     providers = [
         ("openrouter", "OpenRouter (100+ models, pay-per-use)"),
-        ("nous", "Nous Portal (Nous Research subscription)"),
+        ("nous", "Nous Portal (subscription login)"),
         ("openai-codex", "OpenAI Codex"),
         ("zai", "Z.AI / GLM (Zhipu AI direct API)"),
         ("kimi-coding", "Kimi / Moonshot (Moonshot AI direct API)"),
@@ -1469,7 +1476,7 @@ def cmd_config(args):
 
 def cmd_version(args):
     """Show version."""
-    print(f"Hermes Agent v{__version__}")
+    print(f"{BRAND_NAME} v{__version__}")
     print(f"Project: {PROJECT_ROOT}")
     
     # Show Python version
@@ -1590,7 +1597,7 @@ def cmd_update(args):
     import subprocess
     import shutil
     
-    print("⚕ Updating Hermes Agent...")
+    print(f"⚕ Updating {BRAND_NAME}...")
     print()
     
     # Try git-based update first, fall back to ZIP download on Windows
@@ -1819,32 +1826,32 @@ def _coalesce_session_name_args(argv: list) -> list:
 def main():
     """Main entry point for hermes CLI."""
     parser = argparse.ArgumentParser(
-        prog="hermes",
-        description="Hermes Agent - AI assistant with tool-calling capabilities",
+        prog=BRAND_CLI_COMMAND,
+        description=f"{BRAND_NAME} - AI assistant with tool-calling capabilities",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
+        epilog=f"""
 Examples:
-    hermes                        Start interactive chat
-    hermes chat -q "Hello"        Single query mode
-    hermes -c                     Resume the most recent session
-    hermes -c "my project"        Resume a session by name (latest in lineage)
-    hermes --resume <session_id>  Resume a specific session by ID
-    hermes setup                  Run setup wizard
-    hermes logout                 Clear stored authentication
-    hermes model                  Select default model
-    hermes config                 View configuration
-    hermes config edit            Edit config in $EDITOR
-    hermes config set model gpt-4 Set a config value
-    hermes gateway                Run messaging gateway
-    hermes -w                     Start in isolated git worktree
-    hermes gateway install        Install as system service
-    hermes sessions list          List past sessions
-    hermes sessions browse        Interactive session picker
-    hermes sessions rename ID T   Rename/title a session
-    hermes update                 Update to latest version
+    {BRAND_CLI_COMMAND}                        Start interactive chat
+    {BRAND_CLI_COMMAND} chat -q "Hello"        Single query mode
+    {BRAND_CLI_COMMAND} -c                     Resume the most recent session
+    {BRAND_CLI_COMMAND} -c "my project"        Resume a session by name (latest in lineage)
+    {BRAND_CLI_COMMAND} --resume <session_id>  Resume a specific session by ID
+    {BRAND_CLI_COMMAND} setup                  Run setup wizard
+    {BRAND_CLI_COMMAND} logout                 Clear stored authentication
+    {BRAND_CLI_COMMAND} model                  Select default model
+    {BRAND_CLI_COMMAND} config                 View configuration
+    {BRAND_CLI_COMMAND} config edit            Edit config in $EDITOR
+    {BRAND_CLI_COMMAND} config set model gpt-4 Set a config value
+    {BRAND_CLI_COMMAND} gateway                Run messaging gateway
+    {BRAND_CLI_COMMAND} -w                     Start in isolated git worktree
+    {BRAND_CLI_COMMAND} gateway install        Install as system service
+    {BRAND_CLI_COMMAND} sessions list          List past sessions
+    {BRAND_CLI_COMMAND} sessions browse        Interactive session picker
+    {BRAND_CLI_COMMAND} sessions rename ID T   Rename/title a session
+    {BRAND_CLI_COMMAND} update                 Update to latest version
 
 For more help on a command:
-    hermes <command> --help
+    {BRAND_CLI_COMMAND} <command> --help
 """
     )
     
@@ -1883,7 +1890,7 @@ For more help on a command:
     chat_parser = subparsers.add_parser(
         "chat",
         help="Interactive chat with the agent",
-        description="Start an interactive chat session with Hermes Agent"
+        description=f"Start an interactive chat session with {BRAND_NAME}"
     )
     chat_parser.add_argument(
         "-q", "--query",
@@ -1993,7 +2000,7 @@ For more help on a command:
     setup_parser = subparsers.add_parser(
         "setup",
         help="Interactive setup wizard",
-        description="Configure Hermes Agent with an interactive wizard. "
+        description=f"Configure {BRAND_NAME} with an interactive wizard. "
                     "Run a specific section: hermes setup model|terminal|gateway|tools|agent"
     )
     setup_parser.add_argument(
@@ -2101,7 +2108,7 @@ For more help on a command:
     status_parser = subparsers.add_parser(
         "status",
         help="Show status of all components",
-        description="Display status of Hermes Agent components"
+        description=f"Display status of {BRAND_NAME} components"
     )
     status_parser.add_argument(
         "--all",
@@ -2143,7 +2150,7 @@ For more help on a command:
     doctor_parser = subparsers.add_parser(
         "doctor",
         help="Check configuration and dependencies",
-        description="Diagnose issues with Hermes Agent setup"
+        description=f"Diagnose issues with {BRAND_NAME} setup"
     )
     doctor_parser.add_argument(
         "--fix",
@@ -2158,7 +2165,7 @@ For more help on a command:
     config_parser = subparsers.add_parser(
         "config",
         help="View and edit configuration",
-        description="Manage Hermes Agent configuration"
+        description=f"Manage {BRAND_NAME} configuration"
     )
     config_subparsers = config_parser.add_subparsers(dest="config_command")
     
@@ -2532,7 +2539,7 @@ For more help on a command:
     # =========================================================================
     update_parser = subparsers.add_parser(
         "update",
-        help="Update Hermes Agent to the latest version",
+        help=f"Update {BRAND_NAME} to the latest version",
         description="Pull the latest changes from git and reinstall dependencies"
     )
     update_parser.set_defaults(func=cmd_update)
@@ -2542,8 +2549,8 @@ For more help on a command:
     # =========================================================================
     uninstall_parser = subparsers.add_parser(
         "uninstall",
-        help="Uninstall Hermes Agent",
-        description="Remove Hermes Agent from your system. Can keep configs/data for reinstall."
+        help=f"Uninstall {BRAND_NAME}",
+        description=f"Remove {BRAND_NAME} from your system. Can keep configs/data for reinstall."
     )
     uninstall_parser.add_argument(
         "--full",
