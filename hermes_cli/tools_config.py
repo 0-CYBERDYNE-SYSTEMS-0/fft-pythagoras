@@ -1,5 +1,5 @@
 """
-Unified tool configuration for Hermes Agent.
+Unified tool configuration for FarmFriend.
 
 `hermes tools` and `hermes setup tools` both enter this module.
 Select a platform → toggle toolsets on/off → for newly enabled tools
@@ -19,6 +19,7 @@ from hermes_cli.config import (
     load_config, save_config, get_env_value, save_env_value,
     get_hermes_home,
 )
+from hermes_cli.branding import BRAND_NAME, brand_command
 from hermes_cli.colors import Colors, color
 
 PROJECT_ROOT = Path(__file__).parent.parent.resolve()
@@ -303,7 +304,8 @@ def _get_enabled_platforms() -> List[str]:
         enabled.append("discord")
     if get_env_value("SLACK_BOT_TOKEN"):
         enabled.append("slack")
-    if get_env_value("WHATSAPP_ENABLED"):
+    whatsapp_enabled = (get_env_value("WHATSAPP_ENABLED") or "").lower() in ("true", "1", "yes")
+    if whatsapp_enabled:
         enabled.append("whatsapp")
     return enabled
 
@@ -874,58 +876,56 @@ def tools_command(args=None, first_install: bool = False, config: dict = None):
     enabled_platforms = _get_enabled_platforms()
 
     print()
-    print(color("⚕ Hermes Tool Configuration", Colors.CYAN, Colors.BOLD))
+    print(color(f"⚕ {BRAND_NAME} Tool Configuration", Colors.CYAN, Colors.BOLD))
     print(color("  Enable or disable tools per platform.", Colors.DIM))
     print(color("  Tools that need API keys will be configured when enabled.", Colors.DIM))
     print()
 
-    # ── First-time install: linear flow, no platform menu ──
+    # ── First-time install: single onboarding pass applied to all enabled platforms ──
     if first_install:
-        for pkey in enabled_platforms:
-            pinfo = PLATFORMS[pkey]
-            current_enabled = _get_platform_tools(config, pkey)
+        current_enabled = _get_platform_tools(config, "cli")
+        checklist_preselected = current_enabled - _DEFAULT_OFF_TOOLSETS
 
-            # Uncheck toolsets that should be off by default
-            checklist_preselected = current_enabled - _DEFAULT_OFF_TOOLSETS
+        target_label = PLATFORMS["cli"]["label"]
+        if len(enabled_platforms) > 1:
+            target_label = "all enabled platforms"
 
-            # Show checklist
-            new_enabled = _prompt_toolset_checklist(pinfo["label"], checklist_preselected)
+        new_enabled = _prompt_toolset_checklist(target_label, checklist_preselected)
 
-            added = new_enabled - current_enabled
-            removed = current_enabled - new_enabled
-            if added:
-                for ts in sorted(added):
-                    label = next((l for k, l, _ in CONFIGURABLE_TOOLSETS if k == ts), ts)
-                    print(color(f"  + {label}", Colors.GREEN))
-            if removed:
-                for ts in sorted(removed):
-                    label = next((l for k, l, _ in CONFIGURABLE_TOOLSETS if k == ts), ts)
-                    print(color(f"  - {label}", Colors.RED))
+        added = new_enabled - current_enabled
+        removed = current_enabled - new_enabled
+        if added:
+            for ts in sorted(added):
+                label = next((l for k, l, _ in CONFIGURABLE_TOOLSETS if k == ts), ts)
+                print(color(f"  + {label}", Colors.GREEN))
+        if removed:
+            for ts in sorted(removed):
+                label = next((l for k, l, _ in CONFIGURABLE_TOOLSETS if k == ts), ts)
+                print(color(f"  - {label}", Colors.RED))
 
-            # Walk through ALL selected tools that have provider options or
-            # need API keys.  This ensures browser (Local vs Browserbase),
-            # TTS (Edge vs OpenAI vs ElevenLabs), etc. are shown even when
-            # a free provider exists.
-            to_configure = [
-                ts_key for ts_key in sorted(new_enabled)
-                if TOOL_CATEGORIES.get(ts_key) or TOOLSET_ENV_REQUIREMENTS.get(ts_key)
-            ]
+        to_configure = [
+            ts_key for ts_key in sorted(new_enabled)
+            if TOOL_CATEGORIES.get(ts_key) or TOOLSET_ENV_REQUIREMENTS.get(ts_key)
+        ]
 
-            if to_configure:
-                print()
-                print(color(f"  Configuring {len(to_configure)} tool(s):", Colors.YELLOW))
-                for ts_key in to_configure:
-                    label = next((l for k, l, _ in CONFIGURABLE_TOOLSETS if k == ts_key), ts_key)
-                    print(color(f"    • {label}", Colors.DIM))
-                print(color("  You can skip any tool you don't need right now.", Colors.DIM))
-                print()
-                for ts_key in to_configure:
-                    _configure_toolset(ts_key, config)
-
-            _save_platform_tools(config, pkey, new_enabled)
-            save_config(config)
-            print(color(f"  ✓ Saved {pinfo['label']} tool configuration", Colors.GREEN))
+        if to_configure:
             print()
+            print(color(f"  Configuring {len(to_configure)} tool(s):", Colors.YELLOW))
+            for ts_key in to_configure:
+                label = next((l for k, l, _ in CONFIGURABLE_TOOLSETS if k == ts_key), ts_key)
+                print(color(f"    • {label}", Colors.DIM))
+            print(color("  You can skip any tool you don't need right now.", Colors.DIM))
+            print()
+            for ts_key in to_configure:
+                _configure_toolset(ts_key, config)
+
+        for pkey in enabled_platforms:
+            _save_platform_tools(config, pkey, new_enabled)
+
+        save_config(config)
+        applied_labels = ", ".join(PLATFORMS[pkey]["label"] for pkey in enabled_platforms)
+        print(color(f"  ✓ Applied tool configuration to {applied_labels}", Colors.GREEN))
+        print()
 
         return
 
@@ -1000,5 +1000,5 @@ def tools_command(args=None, first_install: bool = False, config: dict = None):
 
     print()
     print(color("  Tool configuration saved to ~/.hermes/config.yaml", Colors.DIM))
-    print(color("  Changes take effect on next 'hermes' or gateway restart.", Colors.DIM))
+    print(color(f"  Changes take effect on next '{brand_command()}' or gateway restart.", Colors.DIM))
     print()

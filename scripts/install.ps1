@@ -590,7 +590,7 @@ function Install-Dependencies {
 }
 
 function Set-PathVariable {
-    Write-Info "Setting up hermes command..."
+    Write-Info "Setting up CLI commands..."
     
     if ($NoVenv) {
         $hermesBin = "$InstallDir"
@@ -626,7 +626,7 @@ function Set-PathVariable {
     # Update current session
     $env:Path = "$hermesBin;$env:Path"
     
-    Write-Success "hermes command ready"
+    Write-Success "CLI commands ready: hermes, farmfriend"
 }
 
 function Copy-ConfigTemplates {

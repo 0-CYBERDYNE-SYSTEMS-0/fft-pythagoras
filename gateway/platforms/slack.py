@@ -39,6 +39,7 @@ from gateway.platforms.base import (
     cache_image_from_url,
     cache_audio_from_url,
 )
+from hermes_cli.branding import BRAND_CLI_COMMAND
 
 
 def check_slack_requirements() -> bool:
@@ -58,7 +59,7 @@ class SlackAdapter(BasePlatformAdapter):
       - DMs and channel messages (mention-gated in channels)
       - Thread support
       - File/image/audio attachments
-      - Slash commands (/hermes)
+      - Slash commands (supports /farmfriend and legacy /hermes)
       - Typing indicators (not natively supported by Slack bots)
     """
 
@@ -106,11 +107,14 @@ class SlackAdapter(BasePlatformAdapter):
             async def handle_app_mention(event, say):
                 pass
 
-            # Register slash command handler
-            @self._app.command("/hermes")
-            async def handle_hermes_command(ack, command):
+            # Keep listening on /hermes for existing workspaces while also
+            # accepting the branded slash command on newly configured ones.
+            async def handle_slash_command(ack, command):
                 await ack()
                 await self._handle_slash_command(command)
+
+            for slash_command in dict.fromkeys((f"/{BRAND_CLI_COMMAND}", "/hermes")):
+                self._app.command(slash_command)(handle_slash_command)
 
             # Start Socket Mode handler in background
             self._handler = AsyncSocketModeHandler(self._app, app_token)
@@ -492,7 +496,7 @@ class SlackAdapter(BasePlatformAdapter):
         await self.handle_message(msg_event)
 
     async def _handle_slash_command(self, command: dict) -> None:
-        """Handle /hermes slash command."""
+        """Handle the branded Slack slash command."""
         text = command.get("text", "").strip()
         user_id = command.get("user_id", "")
         channel_id = command.get("channel_id", "")

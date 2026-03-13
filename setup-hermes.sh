@@ -13,7 +13,7 @@
 # 2. Creates a virtual environment with Python 3.11 via uv
 # 3. Installs all dependencies (main package + submodules)
 # 4. Creates .env from template (if not exists)
-# 5. Symlinks the 'hermes' CLI command into ~/.local/bin
+# 5. Symlinks the 'hermes' and 'farmfriend' CLI commands into ~/.local/bin
 # 6. Runs the setup wizard (optional)
 # ============================================================================
 
@@ -126,6 +126,13 @@ echo -e "${GREEN}✓${NC} Dependencies installed"
 
 echo -e "${CYAN}→${NC} Installing submodules..."
 
+if command -v git &> /dev/null; then
+    if [ ! -f "mini-swe-agent/pyproject.toml" ] || [ ! -f "tinker-atropos/pyproject.toml" ]; then
+        echo -e "${CYAN}→${NC} Initializing git submodules..."
+        git submodule update --init --recursive
+    fi
+fi
+
 # mini-swe-agent (terminal tool backend)
 if [ -d "mini-swe-agent" ] && [ -f "mini-swe-agent/pyproject.toml" ]; then
     $UV_CMD pip install -e "./mini-swe-agent" && \
@@ -205,15 +212,20 @@ else
 fi
 
 # ============================================================================
-# PATH setup — symlink hermes into ~/.local/bin
+# PATH setup — symlink hermes and farmfriend into ~/.local/bin
 # ============================================================================
 
-echo -e "${CYAN}→${NC} Setting up hermes command..."
+echo -e "${CYAN}→${NC} Setting up CLI commands..."
 
 HERMES_BIN="$SCRIPT_DIR/venv/bin/hermes"
+FARMFRIEND_BIN="$SCRIPT_DIR/venv/bin/farmfriend"
 mkdir -p "$HOME/.local/bin"
 ln -sf "$HERMES_BIN" "$HOME/.local/bin/hermes"
 echo -e "${GREEN}✓${NC} Symlinked hermes → ~/.local/bin/hermes"
+if [ -x "$FARMFRIEND_BIN" ]; then
+    ln -sf "$FARMFRIEND_BIN" "$HOME/.local/bin/farmfriend"
+    echo -e "${GREEN}✓${NC} Symlinked farmfriend → ~/.local/bin/farmfriend"
+fi
 
 # Determine the appropriate shell config file
 SHELL_CONFIG=""

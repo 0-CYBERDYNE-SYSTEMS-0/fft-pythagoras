@@ -691,7 +691,7 @@ install_deps() {
 }
 
 setup_path() {
-    log_info "Setting up hermes command..."
+    log_info "Setting up CLI commands..."
 
     if [ "$USE_VENV" = true ]; then
         HERMES_BIN="$INSTALL_DIR/venv/bin/hermes"
@@ -711,10 +711,15 @@ setup_path() {
         return 0
     fi
 
-    # Create symlink in ~/.local/bin (standard user binary location, usually on PATH)
+    # Create symlinks in ~/.local/bin (standard user binary location, usually on PATH)
     mkdir -p "$HOME/.local/bin"
     ln -sf "$HERMES_BIN" "$HOME/.local/bin/hermes"
     log_success "Symlinked hermes → ~/.local/bin/hermes"
+    FARMFRIEND_BIN="${HERMES_BIN%/hermes}/farmfriend"
+    if [ -x "$FARMFRIEND_BIN" ]; then
+        ln -sf "$FARMFRIEND_BIN" "$HOME/.local/bin/farmfriend"
+        log_success "Symlinked farmfriend → ~/.local/bin/farmfriend"
+    fi
 
     # Check if ~/.local/bin is on PATH; if not, add it to shell config.
     # Detect the user's actual login shell (not the shell running this script,
@@ -761,7 +766,7 @@ setup_path() {
     # Export for current session so hermes works immediately
     export PATH="$HOME/.local/bin:$PATH"
 
-    log_success "hermes command ready"
+    log_success "CLI commands ready: hermes, farmfriend"
 }
 
 copy_config_templates() {

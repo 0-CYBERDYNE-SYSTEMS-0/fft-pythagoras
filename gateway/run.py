@@ -782,7 +782,7 @@ class GatewayRunner:
                             f"Hi~ I don't recognize you yet!\n\n"
                             f"Here's your pairing code: `{code}`\n\n"
                             f"Ask the bot owner to run:\n"
-                            f"`hermes pairing approve {platform_name} {code}`"
+                            f"`{BRAND_CLI_COMMAND} pairing approve {platform_name} {code}`"
                         )
                 else:
                     adapter = self.adapters.get(source.platform)
@@ -1158,7 +1158,7 @@ class GatewayRunner:
                     await adapter.send(
                         source.chat_id,
                         f"📬 No home channel is set for {platform_name.title()}. "
-                        f"A home channel is where Hermes delivers cron job results "
+                        f"A home channel is where {BRAND_NAME} delivers cron job results "
                         f"and cross-platform messages.\n\n"
                         f"Type /sethome to make this chat your home channel, "
                         f"or ignore to skip."
@@ -1654,7 +1654,7 @@ class GatewayRunner:
 
         lines.append("")
         lines.append("Switch: `/model provider:model-name`")
-        lines.append("Setup: `hermes setup`")
+        lines.append(f"Setup: `{BRAND_CLI_COMMAND} setup`")
         return "\n".join(lines)
     
     async def _handle_personality_command(self, event: MessageEvent) -> str:
@@ -3170,14 +3170,15 @@ async def start_gateway(config: Optional[GatewayConfig] = None, replace: bool = 
             hermes_home = os.getenv("HERMES_HOME", "~/.hermes")
             logger.error(
                 "Another gateway instance is already running (PID %d, HERMES_HOME=%s). "
-                "Use 'hermes gateway restart' to replace it, or 'hermes gateway stop' first.",
+                f"Use '{BRAND_CLI_COMMAND} gateway restart' to replace it, or "
+                f"'{BRAND_CLI_COMMAND} gateway stop' first.",
                 existing_pid, hermes_home,
             )
             print(
                 f"\n❌ Gateway already running (PID {existing_pid}).\n"
-                f"   Use 'hermes gateway restart' to replace it,\n"
-                f"   or 'hermes gateway stop' to kill it first.\n"
-                f"   Or use 'hermes gateway run --replace' to auto-replace.\n"
+                f"   Use '{BRAND_CLI_COMMAND} gateway restart' to replace it,\n"
+                f"   or '{BRAND_CLI_COMMAND} gateway stop' to kill it first.\n"
+                f"   Or use '{BRAND_CLI_COMMAND} gateway run --replace' to auto-replace.\n"
             )
             return False
 

@@ -13,6 +13,8 @@ import os
 import re
 from typing import Dict, List, Optional, Any
 
+from hermes_cli.branding import BRAND_NAME
+
 logger = logging.getLogger(__name__)
 
 try:
@@ -168,7 +170,7 @@ class TelegramAdapter(BasePlatformAdapter):
                     BotCommand("usage", "Show token usage for this session"),
                     BotCommand("provider", "Show available providers"),
                     BotCommand("insights", "Show usage insights and analytics"),
-                    BotCommand("update", "Update Hermes to the latest version"),
+                    BotCommand("update", f"Update {BRAND_NAME} to the latest version"),
                     BotCommand("reload_mcp", "Reload MCP servers from config"),
                     BotCommand("help", "Show available commands"),
                 ])

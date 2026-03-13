@@ -1,5 +1,5 @@
 """
-Interactive setup wizard for Hermes Agent.
+Interactive setup wizard for FarmFriend.
 
 Modular wizard with independently-runnable sections:
   1. Model & Provider — choose your AI provider and model
@@ -28,6 +28,7 @@ from hermes_cli.config import (
     ensure_hermes_home, DEFAULT_CONFIG
 )
 
+from hermes_cli.branding import BRAND_NAME, brand_command
 from hermes_cli.colors import Colors, color
 
 def print_header(title: str):
@@ -281,7 +282,7 @@ def _prompt_api_key(var: dict):
         save_env_value(var["name"], value)
         print_success(f"  ✓ Saved")
     else:
-        print_warning(f"  Skipped (configure later with 'hermes setup')")
+        print_warning(f"  Skipped (configure later with '{brand_command('setup')}')")
 
 
 def _print_setup_summary(config: dict, hermes_home):
@@ -375,7 +376,7 @@ def _print_setup_summary(config: dict, hermes_home):
     
     disabled_tools = [(name, var) for name, avail, var in tool_status if not avail]
     if disabled_tools:
-        print_warning("Some tools are disabled. Run 'hermes setup tools' to configure them,")
+        print_warning(f"Some tools are disabled. Run '{brand_command('setup', 'tools')}' to configure them,")
         print_warning("or edit ~/.hermes/.env directly to add the missing API keys.")
         print()
     
@@ -398,15 +399,15 @@ def _print_setup_summary(config: dict, hermes_home):
     print()
     print(color("📝 To edit your configuration:", Colors.CYAN, Colors.BOLD))
     print()
-    print(f"   {color('hermes setup', Colors.GREEN)}          Re-run the full wizard")
-    print(f"   {color('hermes setup model', Colors.GREEN)}    Change model/provider")
-    print(f"   {color('hermes setup terminal', Colors.GREEN)} Change terminal backend")
-    print(f"   {color('hermes setup gateway', Colors.GREEN)}  Configure messaging")
-    print(f"   {color('hermes setup tools', Colors.GREEN)}    Configure tool providers")
+    print(f"   {color(brand_command('setup'), Colors.GREEN)}          Re-run the full wizard")
+    print(f"   {color(brand_command('setup', 'model'), Colors.GREEN)}    Change model/provider")
+    print(f"   {color(brand_command('setup', 'terminal'), Colors.GREEN)} Change terminal backend")
+    print(f"   {color(brand_command('setup', 'gateway'), Colors.GREEN)}  Configure messaging")
+    print(f"   {color(brand_command('setup', 'tools'), Colors.GREEN)}    Configure tool providers")
     print()
-    print(f"   {color('hermes config', Colors.GREEN)}         View current settings")
-    print(f"   {color('hermes config edit', Colors.GREEN)}    Open config in your editor")
-    print(f"   {color('hermes config set KEY VALUE', Colors.GREEN)}")
+    print(f"   {color(brand_command('config'), Colors.GREEN)}         View current settings")
+    print(f"   {color(brand_command('config', 'edit'), Colors.GREEN)}    Open config in your editor")
+    print(f"   {color(brand_command('config', 'set') + ' KEY VALUE', Colors.GREEN)}")
     print(f"                          Set a specific value")
     print()
     print(f"   Or edit the files directly:")
@@ -418,9 +419,9 @@ def _print_setup_summary(config: dict, hermes_home):
     print()
     print(color("🚀 Ready to go!", Colors.CYAN, Colors.BOLD))
     print()
-    print(f"   {color('hermes', Colors.GREEN)}              Start chatting")
-    print(f"   {color('hermes gateway', Colors.GREEN)}      Start messaging gateway")
-    print(f"   {color('hermes doctor', Colors.GREEN)}       Check for issues")
+    print(f"   {color(brand_command(), Colors.GREEN)}              Start chatting")
+    print(f"   {color(brand_command('gateway'), Colors.GREEN)}      Start messaging gateway")
+    print(f"   {color(brand_command('doctor'), Colors.GREEN)}       Check for issues")
     print()
 
 
@@ -533,7 +534,7 @@ def setup_model_provider(config: dict):
     default_provider = len(provider_choices) - 1 if has_any_provider else 3
     
     if not has_any_provider:
-        print_warning("An inference provider is required for Hermes to work.")
+        print_warning(f"An inference provider is required for {BRAND_NAME} to work.")
         print()
     
     provider_idx = prompt_choice("Select your inference provider:", provider_choices, default_provider)
@@ -605,11 +606,11 @@ def setup_model_provider(config: dict):
 
         except SystemExit:
             print_warning("Nous Portal login was cancelled or failed.")
-            print_info("You can try again later with: hermes model")
+            print_info(f"You can try again later with: {brand_command('model')}")
             selected_provider = None
         except Exception as e:
             print_error(f"Login failed: {e}")
-            print_info("You can try again later with: hermes model")
+            print_info(f"You can try again later with: {brand_command('model')}")
             selected_provider = None
 
     elif provider_idx == 2:  # OpenAI Codex
@@ -629,11 +630,11 @@ def setup_model_provider(config: dict):
             _update_config_for_provider("openai-codex", DEFAULT_CODEX_BASE_URL)
         except SystemExit:
             print_warning("OpenAI Codex login was cancelled or failed.")
-            print_info("You can try again later with: hermes model")
+            print_info(f"You can try again later with: {brand_command('model')}")
             selected_provider = None
         except Exception as e:
             print_error(f"Login failed: {e}")
-            print_info("You can try again later with: hermes model")
+            print_info(f"You can try again later with: {brand_command('model')}")
             selected_provider = None
 
     elif provider_idx == 3:  # OpenRouter
@@ -1073,7 +1074,7 @@ def setup_terminal_backend(config: dict):
     import shutil
 
     print_header("Terminal Backend")
-    print_info("Choose where Hermes runs shell commands and code.")
+    print_info(f"Choose where {BRAND_NAME} runs shell commands and code.")
     print_info("This affects tool execution, file access, and isolation.")
     print()
 
@@ -1122,7 +1123,7 @@ def setup_terminal_backend(config: dict):
         # CWD for messaging
         print()
         print_info("Working directory for messaging sessions:")
-        print_info("  When using Hermes via Telegram/Discord, this is where")
+        print_info(f"  When using {BRAND_NAME} via Telegram/Discord, this is where")
         print_info("  the agent starts. CLI mode always starts in the current directory.")
         current_cwd = config.get('terminal', {}).get('cwd', '')
         cwd = prompt("  Messaging working directory", current_cwd or str(Path.home()))
@@ -1486,7 +1487,7 @@ def setup_agent_settings(config: dict):
 def setup_gateway(config: dict):
     """Configure messaging platform integrations."""
     print_header("Messaging Platforms")
-    print_info("Connect to messaging platforms to chat with Hermes from anywhere.")
+    print_info(f"Connect to messaging platforms to chat with {BRAND_NAME} from anywhere.")
     print()
 
     # ── Telegram ──
@@ -1519,7 +1520,7 @@ def setup_gateway(config: dict):
             
             # Home channel setup with better guidance
             print()
-            print_info("📬 Home Channel: where Hermes delivers cron job results,")
+            print_info(f"📬 Home Channel: where {BRAND_NAME} delivers cron job results,")
             print_info("   cross-platform messages, and notifications.")
             print_info("   For Telegram DMs, this is your user ID (same as above).")
             
@@ -1582,7 +1583,7 @@ def setup_gateway(config: dict):
             
             # Home channel setup with better guidance
             print()
-            print_info("📬 Home Channel: where Hermes delivers cron job results,")
+            print_info(f"📬 Home Channel: where {BRAND_NAME} delivers cron job results,")
             print_info("   cross-platform messages, and notifications.")
             print_info("   To get a channel ID: right-click a channel → Copy Channel ID")
             print_info("   (requires Developer Mode in Discord settings)")
@@ -1652,12 +1653,12 @@ def setup_gateway(config: dict):
     existing_whatsapp = get_env_value('WHATSAPP_ENABLED')
     if not existing_whatsapp and prompt_yes_no("Set up WhatsApp?", False):
         print_info("WhatsApp connects via a built-in bridge (Baileys).")
-        print_info("Requires Node.js. Run 'hermes whatsapp' for guided setup.")
+        print_info(f"Requires Node.js. Run '{brand_command('whatsapp')}' for guided setup.")
         print()
         if prompt_yes_no("Enable WhatsApp now?", True):
             save_env_value("WHATSAPP_ENABLED", "true")
             print_success("WhatsApp enabled")
-            print_info("Run 'hermes whatsapp' to choose your mode (separate bot number")
+            print_info(f"Run '{brand_command('whatsapp')}' to choose your mode (separate bot number")
             print_info("or personal self-chat) and pair via QR code.")
     
     # ── Gateway Service Setup ──
@@ -1688,7 +1689,7 @@ def setup_gateway(config: dict):
             print_info("   messages can't be delivered to those platforms.")
             print_info("   Set one later with /set-home in your chat, or:")
             for plat in missing_home:
-                print_info(f"     hermes config set {plat.upper()}_HOME_CHANNEL <channel_id>")
+                print_info(f"     {brand_command('config', 'set')} {plat.upper()}_HOME_CHANNEL <channel_id>")
 
         # Offer to install the gateway as a system service
         import platform as _platform
@@ -1742,13 +1743,13 @@ def setup_gateway(config: dict):
                             print_error(f"  Start failed: {e}")
                 except Exception as e:
                     print_error(f"  Install failed: {e}")
-                    print_info("  You can try manually: hermes gateway install")
+                    print_info(f"  You can try manually: {brand_command('gateway', 'install')}")
             else:
-                print_info("  You can install later: hermes gateway install")
-                print_info("  Or run in foreground:  hermes gateway")
+                print_info(f"  You can install later: {brand_command('gateway', 'install')}")
+                print_info(f"  Or run in foreground:  {brand_command('gateway')}")
         else:
             print_info("Start the gateway to bring your bots online:")
-            print_info("   hermes gateway              # Run in foreground")
+            print_info(f"   {brand_command('gateway')}              # Run in foreground")
 
         print_info("━" * 50)
 
@@ -1788,12 +1789,12 @@ def run_setup_wizard(args):
     """Run the interactive setup wizard.
     
     Supports full, quick, and section-specific setup:
-      hermes setup           — full or quick (auto-detected)
-      hermes setup model     — just model/provider
-      hermes setup terminal  — just terminal backend
-      hermes setup gateway   — just messaging platforms
-      hermes setup tools     — just tool configuration
-      hermes setup agent     — just agent settings
+      farmfriend setup           — full or quick (auto-detected)
+      farmfriend setup model     — just model/provider
+      farmfriend setup terminal  — just terminal backend
+      farmfriend setup gateway   — just messaging platforms
+      farmfriend setup tools     — just tool configuration
+      farmfriend setup agent     — just agent settings
     """
     ensure_hermes_home()
     
@@ -1807,7 +1808,7 @@ def run_setup_wizard(args):
             if key == section:
                 print()
                 print(color("┌─────────────────────────────────────────────────────────┐", Colors.MAGENTA))
-                print(color(f"│     ⚕ Hermes Setup — {label:<34s} │", Colors.MAGENTA))
+                print(color(f"│     ⚕ {BRAND_NAME} Setup — {label:<30s} │", Colors.MAGENTA))
                 print(color("└─────────────────────────────────────────────────────────┘", Colors.MAGENTA))
                 func(config)
                 save_config(config)
@@ -1830,9 +1831,9 @@ def run_setup_wizard(args):
     
     print()
     print(color("┌─────────────────────────────────────────────────────────┐", Colors.MAGENTA))
-    print(color("│             ⚕ Hermes Agent Setup Wizard                │", Colors.MAGENTA))
+    print(color(f"│          ⚕ {BRAND_NAME} Setup Wizard                   │", Colors.MAGENTA))
     print(color("├─────────────────────────────────────────────────────────┤", Colors.MAGENTA))
-    print(color("│  Let's configure your Hermes Agent installation.       │", Colors.MAGENTA))
+    print(color(f"│  Let's configure your {BRAND_NAME} installation.       │", Colors.MAGENTA))
     print(color("│  Press Ctrl+C at any time to exit.                     │", Colors.MAGENTA))
     print(color("└─────────────────────────────────────────────────────────┘", Colors.MAGENTA))
     
@@ -1840,7 +1841,7 @@ def run_setup_wizard(args):
         # ── Returning User Menu ──
         print()
         print_header("Welcome Back!")
-        print_success("You already have Hermes configured.")
+        print_success(f"You already have {BRAND_NAME} configured.")
         print()
 
         menu_choices = [
@@ -1869,10 +1870,10 @@ def run_setup_wizard(args):
             pass
         elif choice in (2, 8):
             # Separator — treat as exit
-            print_info("Exiting. Run 'hermes setup' again when ready.")
+            print_info(f"Exiting. Run '{brand_command('setup')}' again when ready.")
             return
         elif choice == 9:
-            print_info("Exiting. Run 'hermes setup' again when ready.")
+            print_info(f"Exiting. Run '{brand_command('setup')}' again when ready.")
             return
         elif 3 <= choice <= 7:
             # Individual section
@@ -1906,7 +1907,7 @@ def run_setup_wizard(args):
     print_info(f"Data folder:  {hermes_home}")
     print_info(f"Install dir:  {PROJECT_ROOT}")
     print()
-    print_info("You can edit these files directly or use 'hermes config edit'")
+    print_info(f"You can edit these files directly or use '{brand_command('config', 'edit')}'")
 
     # Section 1: Model & Provider
     setup_model_provider(config)
@@ -1949,7 +1950,7 @@ def _run_quick_setup(config: dict, hermes_home):
     if not has_anything_missing:
         print_success("Everything is configured! Nothing to do.")
         print()
-        print_info("Run 'hermes setup' and choose 'Full Setup' to reconfigure,")
+        print_info(f"Run '{brand_command('setup')}' and choose 'Full Setup' to reconfigure,")
         print_info("or pick a specific section from the menu.")
         return
 
@@ -2007,8 +2008,8 @@ def _run_quick_setup(config: dict, hermes_home):
     if missing_messaging:
         print()
         print_header("Messaging Platforms")
-        print_info("Connect Hermes to messaging apps to chat from anywhere.")
-        print_info("You can configure these later with 'hermes setup gateway'.")
+        print_info(f"Connect {BRAND_NAME} to messaging apps to chat from anywhere.")
+        print_info(f"You can configure these later with '{brand_command('setup', 'gateway')}'.")
 
         # Group by platform (preserving order)
         platform_order = []
